@@ -208,11 +208,15 @@ func main() {
 	var configfile string
 
 	// Read config
-	flag.StringVar(&configfile, "configfile", "config.toml", "path to the config file")
+	flag.StringVar(&configfile, "conf", "", "path to the config file")
 	flag.Parse()
-	config := ReadConfig(configfile)
 
-	fmt.Println(config)
+	if configfile == "" {
+		fmt.Println("Please sepecify a config file. Run with -h for help")
+		os.Exit(1)
+	}
+
+	config := ReadConfig(configfile)
 
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: []string{config.Host},
