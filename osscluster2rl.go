@@ -224,10 +224,6 @@ func main() {
 	j := rdb.ClusterNodes()
 	k := parseNodes(j)
 	m := listMasters(k)
-	fmt.Println("master_count", len(m))
-	fmt.Println("replication_factor", getReplicationFactor(k))
-	fmt.Println("total_key_count", getKeyspace(m, ""))
-	fmt.Println("total_memory", getMemory(m, ""))
 	wg.Add(len(m))
 	results := make(chan int, len(m))
 	for w := 0; w < len(m); w++ {
@@ -239,6 +235,10 @@ func main() {
 	for elem := range results {
 		cmds += elem
 	}
+	fmt.Println("master_count", len(m))
+	fmt.Println("replication_factor", getReplicationFactor(k))
+	fmt.Println("total_key_count", getKeyspace(m, ""))
+	fmt.Println("total_memory", getMemory(m, ""))
 	fmt.Println("max_commands", cmds)
 	os.Exit(0)
 }
