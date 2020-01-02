@@ -1,0 +1,13 @@
+#############################################################
+
+# How many times to collect usage statistics
+statsiterations=5
+
+# How long to wait in seconds between collecting statistics
+statsinterval=2
+
+# Host Needs only 1 member of the cluster will autodiscover the rest
+host="localhost:30001"
+
+# Output file name
+outputfile="output.csv"

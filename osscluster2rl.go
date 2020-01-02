@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -9,8 +11,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/go-redis/redis"
 )
+
+type Config struct {
+	Host            string
+	OutputFile      string
+	StatsIterations int
+	StatsInterval   int
+}
 
 type clusterNode struct {
 	id      string
@@ -19,6 +29,22 @@ type clusterNode struct {
 	cmdport int
 	role    string
 	slaves  []string
+}
+
+func ReadConfig(configfile string) Config {
+
+	var config Config
+
+	_, err := os.Stat(configfile)
+	if err != nil {
+		log.Fatal("Unable to read config file: ", configfile)
+	}
+
+	if _, err := toml.DecodeFile(configfile, &config); err != nil {
+		log.Fatal(err)
+	}
+
+	return config
 }
 
 func listMasters(clusterNodes []clusterNode) []string {
@@ -179,9 +205,17 @@ func sliceMax(s []int) int {
 func main() {
 
 	var wg sync.WaitGroup
+	var configfile string
+
+	// Read config
+	flag.StringVar(&configfile, "configfile", "config.toml", "path to the config file")
+	flag.Parse()
+	config := ReadConfig(configfile)
+
+	fmt.Println(config)
 
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: []string{"localhost:30001"},
+		Addrs: []string{config.Host},
 	})
 	j := rdb.ClusterNodes()
 	k := parseNodes(j)
@@ -193,7 +227,7 @@ func main() {
 	wg.Add(len(m))
 	results := make(chan int, len(m))
 	for w := 0; w < len(m); w++ {
-		go getCommands(m[w], "", 5, 2, results, &wg)
+		go getCommands(m[w], "", config.StatsIterations, config.StatsInterval, results, &wg)
 	}
 	wg.Wait()
 	close(results)
