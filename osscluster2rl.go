@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -11,16 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/BurntSushi/toml"
+	osscluster2rl "github.com/Redislabs-Solution-Architects/OSSCluster2RL/helpers"
 	"github.com/go-redis/redis"
 )
-
-type Config struct {
-	Host            string
-	OutputFile      string
-	StatsIterations int
-	StatsInterval   int
-}
 
 type clusterNode struct {
 	id      string
@@ -29,22 +21,6 @@ type clusterNode struct {
 	cmdport int
 	role    string
 	slaves  []string
-}
-
-func ReadConfig(configfile string) Config {
-
-	var config Config
-
-	_, err := os.Stat(configfile)
-	if err != nil {
-		log.Fatal("Unable to read config file: ", configfile)
-	}
-
-	if _, err := toml.DecodeFile(configfile, &config); err != nil {
-		log.Fatal(err)
-	}
-
-	return config
 }
 
 func listMasters(clusterNodes []clusterNode) []string {
@@ -216,7 +192,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config := ReadConfig(configfile)
+	config := osscluster2rl.ReadConfig(configfile)
 
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: []string{config.Host},
