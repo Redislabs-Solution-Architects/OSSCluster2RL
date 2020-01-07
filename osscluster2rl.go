@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -194,6 +196,16 @@ func main() {
 
 	config := osscluster2rl.ReadConfig(configfile)
 
+	rows := [][]string{
+		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "max_commands"},
+	}
+	csvfile, err := os.Create(config.OutputFile)
+
+	if err != nil {
+		log.Fatalf("failed creating file: %s", err)
+	}
+	writer := csv.NewWriter(csvfile)
+
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs: []string{config.Host},
 	})
@@ -211,10 +223,19 @@ func main() {
 	for elem := range results {
 		cmds += elem
 	}
-	fmt.Println("master_count", len(m))
-	fmt.Println("replication_factor", getReplicationFactor(k))
-	fmt.Println("total_key_count", getKeyspace(m, ""))
-	fmt.Println("total_memory", getMemory(m, ""))
-	fmt.Println("max_commands", cmds)
+	r := []string{
+		config.Host,
+		strconv.Itoa(len(m)),
+		strconv.Itoa(getReplicationFactor(k)),
+		strconv.Itoa(getKeyspace(m, "")),
+		strconv.Itoa(getMemory(m, "")),
+		strconv.Itoa(cmds)}
+	rows = append(rows, r)
+	for _, record := range rows {
+		if err := writer.Write(record); err != nil {
+			log.Fatalln("error writing record to csv:", err)
+		}
+	}
+	writer.Flush()
 	os.Exit(0)
 }
