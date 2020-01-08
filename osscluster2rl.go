@@ -132,8 +132,8 @@ func getMemory(servers []string, password string) int {
 
 func getCommands(server string, password string, iters int, slp int, results chan<- int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	prev_commands := 0
-	max_commands := 0
+	prevCommands := 0
+	maxCommands := 0
 	client := redis.NewClient(&redis.Options{
 		Addr:     server,
 		Password: password, // no password set
@@ -145,19 +145,19 @@ func getCommands(server string, password string, iters int, slp int, results cha
 			res := r.FindStringSubmatch(line)
 			if len(res) > 0 {
 				j, _ := strconv.Atoi(res[1])
-				if prev_commands > 0 {
-					if max_commands < j-prev_commands {
-						max_commands = j - prev_commands
-						prev_commands = j
+				if prevCommands > 0 {
+					if maxCommands < j-prevCommands {
+						maxCommands = j - prevCommands
+						prevCommands = j
 					}
 				} else {
-					prev_commands = j
+					prevCommands = j
 				}
 			}
 		}
 		time.Sleep(time.Duration(slp) * time.Second)
 	}
-	results <- max_commands / slp
+	results <- maxCommands / slp
 }
 
 func getReplicationFactor(clusterNodes []clusterNode) int {
@@ -197,7 +197,7 @@ func main() {
 	config := osscluster2rl.ReadConfig(configfile)
 
 	rows := [][]string{
-		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "max_commands"},
+		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "maxCommands"},
 	}
 	csvfile, err := os.Create(config.OutputFile)
 
