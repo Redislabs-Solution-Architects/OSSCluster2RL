@@ -23,3 +23,11 @@ do
         exit 1
     fi
 done
+
+mkdir -p /tmp/osscluster2rl
+cp -R bin/* /tmp/osscluster2rl
+cp README.md /tmp/osscluster2rl
+cp example_config.toml /tmp/osscluster2rl
+cd /tmp
+tar -cf osscluster2rl.tar osscluster2rl
+gzip osscluster2rl.tar
