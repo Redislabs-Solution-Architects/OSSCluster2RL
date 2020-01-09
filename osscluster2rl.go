@@ -21,6 +21,11 @@ type cmdCount struct {
 	count   int
 }
 
+type cmdTarget struct {
+	cluster string
+	server  string
+}
+
 type clusterNode struct {
 	id      string
 	ip      string
@@ -28,6 +33,16 @@ type clusterNode struct {
 	cmdport int
 	role    string
 	slaves  []string
+}
+
+type cluster struct {
+	name        string
+	replication int
+	keyCount    int
+	totalMemory int
+	maxCommands int
+	nodes       []clusterNode
+	masterNodes []string
 }
 
 func listMasters(clusterNodes []clusterNode) []string {
@@ -175,6 +190,16 @@ func getReplicationFactor(clusterNodes []clusterNode) int {
 	return (sliceMax(repFactor))
 }
 
+func getTargets(c []cluster) []cmdTarget {
+	var targets []cmdTarget
+	for _, w := range c {
+		for _, t := range w.masterNodes {
+			targets = append(targets, cmdTarget{cluster: w.name, server: t})
+		}
+	}
+	return targets
+}
+
 func sliceMax(s []int) int {
 	m := 0
 	for i, e := range s {
@@ -189,6 +214,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	var configfile string
+	var clusters []cluster
 
 	// Read config
 	flag.StringVar(&configfile, "conf", "", "path to the config file")
@@ -212,36 +238,50 @@ func main() {
 	writer := csv.NewWriter(csvfile)
 
 	for n, j := range config.Nodes {
-		fmt.Println(n)
-		fmt.Printf("%+v\n", j)
+		clusters = append(clusters)
+		rdb := redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs: []string{j.Host},
+		})
+		j := rdb.ClusterNodes()
+		k := parseNodes(j)
+		m := listMasters(k)
+
+		clusters = append(clusters,
+			cluster{
+				name:        n,
+				replication: getReplicationFactor(k),
+				keyCount:    getKeyspace(m, ""),
+				totalMemory: getMemory(m, ""),
+				nodes:       k,
+				masterNodes: m,
+			})
 	}
 
-	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		//Addrs: []string{config.Host},
-		Addrs: []string{"localhost:30001"},
-	})
-	j := rdb.ClusterNodes()
-	k := parseNodes(j)
-	m := listMasters(k)
-	wg.Add(len(m))
-	results := make(chan cmdCount, len(m))
-	for w := 0; w < len(m); w++ {
-		go getCommands("cluster", m[w], "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
+	targets := getTargets(clusters)
+
+	wg.Add(len(targets))
+	results := make(chan cmdCount, len(targets))
+	for w := 0; w < len(targets); w++ {
+		go getCommands(targets[w].cluster, targets[w].server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
 	}
 	wg.Wait()
 	close(results)
-	cmds := 0
+	cmds := make(map[string]int)
 	for elem := range results {
-		cmds += elem.count
+		cmds[elem.cluster] += elem.count
 	}
-	r := []string{
-		"localhost:30001",
-		strconv.Itoa(len(m)),
-		strconv.Itoa(getReplicationFactor(k)),
-		strconv.Itoa(getKeyspace(m, "")),
-		strconv.Itoa(getMemory(m, "")),
-		strconv.Itoa(cmds)}
-	rows = append(rows, r)
+
+	for _, c := range clusters {
+
+		r := []string{
+			c.name,
+			strconv.Itoa(len(c.masterNodes)),
+			strconv.Itoa(c.replication),
+			strconv.Itoa(c.keyCount),
+			strconv.Itoa(c.totalMemory),
+			strconv.Itoa(cmds[c.name])}
+		rows = append(rows, r)
+	}
 	for _, record := range rows {
 		if err := writer.Write(record); err != nil {
 			log.Fatalln("error writing record to csv:", err)

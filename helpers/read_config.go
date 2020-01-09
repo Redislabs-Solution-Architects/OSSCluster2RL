@@ -1,7 +1,6 @@
 package osscluster2rl
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -35,8 +34,6 @@ func ReadConfig(configfile string) Config {
 	if _, err := toml.DecodeFile(configfile, &config); err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("%+v\n", config)
 
 	return config
 }
