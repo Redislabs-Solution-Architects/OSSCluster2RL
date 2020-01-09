@@ -187,7 +187,8 @@ func getReplicationFactor(clusterNodes []clusterNode) int {
 			repFactor = append(repFactor, len(v.slaves))
 		}
 	}
-	return (sliceMax(repFactor))
+	return (osscluster2rl.SliceMax(repFactor))
+
 }
 
 func getTargets(c []cluster) []cmdTarget {
@@ -198,16 +199,6 @@ func getTargets(c []cluster) []cmdTarget {
 		}
 	}
 	return targets
-}
-
-func sliceMax(s []int) int {
-	m := 0
-	for i, e := range s {
-		if i == 0 || e > m {
-			m = e
-		}
-	}
-	return (m)
 }
 
 func main() {
