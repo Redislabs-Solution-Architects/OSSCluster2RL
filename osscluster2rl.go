@@ -16,47 +16,18 @@ import (
 	"github.com/go-redis/redis"
 )
 
-type cmdCount struct {
-	cluster string
-	count   int
-}
-
-type cmdTarget struct {
-	cluster string
-	server  string
-}
-
-type clusterNode struct {
-	id      string
-	ip      string
-	port    int
-	cmdport int
-	role    string
-	slaves  []string
-}
-
-type cluster struct {
-	name        string
-	replication int
-	keyCount    int
-	totalMemory int
-	maxCommands int
-	nodes       []clusterNode
-	masterNodes []string
-}
-
-func listMasters(clusterNodes []clusterNode) []string {
+func listMasters(clusterNodes []osscluster2rl.ClusterNode) []string {
 	var masters []string
 	for _, v := range clusterNodes {
-		if v.role == "master" {
-			masters = append(masters, v.ip+":"+strconv.Itoa(v.port))
+		if v.Role == "master" {
+			masters = append(masters, v.IP+":"+strconv.Itoa(v.Port))
 		}
 	}
 	return masters
 }
 
-func parseNodes(nodes *redis.StringCmd) []clusterNode {
-	var clusterNodes []clusterNode
+func parseNodes(nodes *redis.StringCmd) []osscluster2rl.ClusterNode {
+	var clusterNodes []osscluster2rl.ClusterNode
 	// the order is not set so we need to run through this loop twice first to get the masters
 	for _, line := range strings.Split(nodes.Val(), "\n") {
 		ln := strings.Split(line, " ")
@@ -67,12 +38,12 @@ func parseNodes(nodes *redis.StringCmd) []clusterNode {
 			if match {
 				i, _ := strconv.Atoi(res[2])
 				j, _ := strconv.Atoi(res[3])
-				n := clusterNode{
-					id:      ln[0],
-					role:    "master",
-					ip:      res[1],
-					port:    i,
-					cmdport: j,
+				n := osscluster2rl.ClusterNode{
+					ID:      ln[0],
+					Role:    "master",
+					IP:      res[1],
+					Port:    i,
+					Cmdport: j,
 				}
 				clusterNodes = append(clusterNodes, n)
 			}
@@ -89,17 +60,17 @@ func parseNodes(nodes *redis.StringCmd) []clusterNode {
 			if match {
 				i, _ := strconv.Atoi(res[2])
 				j, _ := strconv.Atoi(res[3])
-				n := clusterNode{
-					id:      ln[0],
-					role:    "slave",
-					ip:      res[1],
-					port:    i,
-					cmdport: j,
+				n := osscluster2rl.ClusterNode{
+					ID:      ln[0],
+					Role:    "slave",
+					IP:      res[1],
+					Port:    i,
+					Cmdport: j,
 				}
 				clusterNodes = append(clusterNodes, n)
 				for i, v := range clusterNodes {
-					if v.id == ln[3] {
-						clusterNodes[i].slaves = append(clusterNodes[i].slaves, ln[0])
+					if v.ID == ln[3] {
+						clusterNodes[i].Slaves = append(clusterNodes[i].Slaves, ln[0])
 					}
 				}
 			}
@@ -150,7 +121,7 @@ func getMemory(servers []string, password string) int {
 	return (bytes)
 }
 
-func getCommands(cluster string, server string, password string, iters int, slp int, results chan<- cmdCount, wg *sync.WaitGroup) {
+func getCommands(cluster string, server string, password string, iters int, slp int, results chan<- osscluster2rl.CmdCount, wg *sync.WaitGroup) {
 	defer wg.Done()
 	prevCommands := 0
 	maxCommands := 0
@@ -177,25 +148,25 @@ func getCommands(cluster string, server string, password string, iters int, slp 
 		}
 		time.Sleep(time.Duration(slp) * time.Second)
 	}
-	results <- cmdCount{cluster: cluster, count: maxCommands / slp}
+	results <- osscluster2rl.CmdCount{Cluster: cluster, Count: maxCommands / slp}
 }
 
-func getReplicationFactor(clusterNodes []clusterNode) int {
+func getReplicationFactor(clusterNodes []osscluster2rl.ClusterNode) int {
 	var repFactor []int
 	for _, v := range clusterNodes {
-		if v.role == "master" {
-			repFactor = append(repFactor, len(v.slaves))
+		if v.Role == "master" {
+			repFactor = append(repFactor, len(v.Slaves))
 		}
 	}
 	return (osscluster2rl.SliceMax(repFactor))
 
 }
 
-func getTargets(c []cluster) []cmdTarget {
-	var targets []cmdTarget
+func getTargets(c []osscluster2rl.Cluster) []osscluster2rl.CmdTarget {
+	var targets []osscluster2rl.CmdTarget
 	for _, w := range c {
-		for _, t := range w.masterNodes {
-			targets = append(targets, cmdTarget{cluster: w.name, server: t})
+		for _, t := range w.MasterNodes {
+			targets = append(targets, osscluster2rl.CmdTarget{Cluster: w.Name, Server: t})
 		}
 	}
 	return targets
@@ -205,7 +176,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	var configfile string
-	var clusters []cluster
+	var clusters []osscluster2rl.Cluster
 
 	// Read config
 	flag.StringVar(&configfile, "conf", "", "path to the config file")
@@ -238,39 +209,39 @@ func main() {
 		m := listMasters(k)
 
 		clusters = append(clusters,
-			cluster{
-				name:        n,
-				replication: getReplicationFactor(k),
-				keyCount:    getKeyspace(m, ""),
-				totalMemory: getMemory(m, ""),
-				nodes:       k,
-				masterNodes: m,
+			osscluster2rl.Cluster{
+				Name:        n,
+				Replication: getReplicationFactor(k),
+				KeyCount:    getKeyspace(m, ""),
+				TotalMemory: getMemory(m, ""),
+				Nodes:       k,
+				MasterNodes: m,
 			})
 	}
 
 	targets := getTargets(clusters)
 
 	wg.Add(len(targets))
-	results := make(chan cmdCount, len(targets))
+	results := make(chan osscluster2rl.CmdCount, len(targets))
 	for w := 0; w < len(targets); w++ {
-		go getCommands(targets[w].cluster, targets[w].server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
+		go getCommands(targets[w].Cluster, targets[w].Server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
 	}
 	wg.Wait()
 	close(results)
 	cmds := make(map[string]int)
 	for elem := range results {
-		cmds[elem.cluster] += elem.count
+		cmds[elem.Cluster] += elem.Count
 	}
 
 	for _, c := range clusters {
 
 		r := []string{
-			c.name,
-			strconv.Itoa(len(c.masterNodes)),
-			strconv.Itoa(c.replication),
-			strconv.Itoa(c.keyCount),
-			strconv.Itoa(c.totalMemory),
-			strconv.Itoa(cmds[c.name])}
+			c.Name,
+			strconv.Itoa(len(c.MasterNodes)),
+			strconv.Itoa(c.Replication),
+			strconv.Itoa(c.KeyCount),
+			strconv.Itoa(c.TotalMemory),
+			strconv.Itoa(cmds[c.Name])}
 		rows = append(rows, r)
 	}
 	for _, record := range rows {
