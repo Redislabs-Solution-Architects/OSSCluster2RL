@@ -1,13 +1,18 @@
 #############################################################
 
-# How many times to collect usage statistics
-statsiterations=5
+[globals]
+  # How many times to collect usage statistics
+  statsiterations=5
+  
+  # How long to wait in seconds between collecting statistics
+  statsinterval=2
 
-# How long to wait in seconds between collecting statistics
-statsinterval=2
+  # Output file name
+  outputfile="output.csv"
 
 # Host Needs only 1 member of the cluster will autodiscover the rest
-host="localhost:30001"
-
-# Output file name
-outputfile="output.csv"
+[nodes]
+  [nodes.host1]
+    host="localhost:30001"
+  [nodes.host2]
+    host="localhost:30001"

@@ -16,6 +16,11 @@ import (
 	"github.com/go-redis/redis"
 )
 
+type cmdCount struct {
+	cluster string
+	count   int
+}
+
 type clusterNode struct {
 	id      string
 	ip      string
@@ -130,7 +135,7 @@ func getMemory(servers []string, password string) int {
 	return (bytes)
 }
 
-func getCommands(server string, password string, iters int, slp int, results chan<- int, wg *sync.WaitGroup) {
+func getCommands(cluster string, server string, password string, iters int, slp int, results chan<- cmdCount, wg *sync.WaitGroup) {
 	defer wg.Done()
 	prevCommands := 0
 	maxCommands := 0
@@ -157,7 +162,7 @@ func getCommands(server string, password string, iters int, slp int, results cha
 		}
 		time.Sleep(time.Duration(slp) * time.Second)
 	}
-	results <- maxCommands / slp
+	results <- cmdCount{cluster: cluster, count: maxCommands / slp}
 }
 
 func getReplicationFactor(clusterNodes []clusterNode) int {
@@ -199,32 +204,38 @@ func main() {
 	rows := [][]string{
 		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "maxCommands"},
 	}
-	csvfile, err := os.Create(config.OutputFile)
+	csvfile, err := os.Create(config.Global.OutputFile)
 
 	if err != nil {
 		log.Fatalf("failed creating file: %s", err)
 	}
 	writer := csv.NewWriter(csvfile)
 
+	for n, j := range config.Nodes {
+		fmt.Println(n)
+		fmt.Printf("%+v\n", j)
+	}
+
 	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: []string{config.Host},
+		//Addrs: []string{config.Host},
+		Addrs: []string{"localhost:30001"},
 	})
 	j := rdb.ClusterNodes()
 	k := parseNodes(j)
 	m := listMasters(k)
 	wg.Add(len(m))
-	results := make(chan int, len(m))
+	results := make(chan cmdCount, len(m))
 	for w := 0; w < len(m); w++ {
-		go getCommands(m[w], "", config.StatsIterations, config.StatsInterval, results, &wg)
+		go getCommands("cluster", m[w], "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
 	}
 	wg.Wait()
 	close(results)
 	cmds := 0
 	for elem := range results {
-		cmds += elem
+		cmds += elem.count
 	}
 	r := []string{
-		config.Host,
+		"localhost:30001",
 		strconv.Itoa(len(m)),
 		strconv.Itoa(getReplicationFactor(k)),
 		strconv.Itoa(getKeyspace(m, "")),
