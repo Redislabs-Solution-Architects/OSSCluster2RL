@@ -99,3 +99,22 @@ func TestMastersComplex(t *testing.T) {
 		t.Error("Expected to find 22 masters, but got", len(m))
 	}
 }
+
+// TestGetCluster : Fully get running cluster statistics
+// TODO : Figure out how to mock better
+//func TestGetCluster(t *testing.T) {
+//	//j := redis.NewStringResult(simpleClusterInfo, nil)
+//	j := redis.NewStringResult(complexClusterInfo, nil)
+//	k := osscluster2rl.ParseNodes(j)
+//	m := osscluster2rl.ListMasters(k)
+//	c := osscluster2rl.Cluster{
+//		Name:        "simpleTest",
+//		Replication: osscluster2rl.GetReplicationFactor(k),
+//		KeyCount:    osscluster2rl.GetKeyspace(m, ""),
+//		TotalMemory: osscluster2rl.GetMemory(m, ""),
+//		Nodes:       k,
+//		MasterNodes: m,
+//	}
+//	t.Log(c)
+//}
+//

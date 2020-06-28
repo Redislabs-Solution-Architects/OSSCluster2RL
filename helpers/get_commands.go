@@ -1,15 +1,18 @@
 package osscluster2rl
 
 import (
-	"github.com/go-redis/redis"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
-func GetCommands(cluster string, server string, password string, iters int, slp int, results chan<- CmdCount, wg *sync.WaitGroup) {
+// GetCommands: calculate the number of commands bein process per master
+func GetCommands(cluster string, server string, password string, iters int, slp int, results chan<- CmdCount, wg *sync.WaitGroup, dbg bool) {
 	defer wg.Done()
 	prevCommands := 0
 	maxCommands := 0
@@ -19,6 +22,12 @@ func GetCommands(cluster string, server string, password string, iters int, slp 
 	})
 	for i := 1; i <= iters; i++ {
 		info := client.Info("stats")
+		if dbg {
+			fmt.Println("DEBUG: Fetching command count", i, "of", iters, "from", server)
+			if info.Err() != nil {
+				fmt.Println("Error fetching command count from ", server, "Error: ", info.Err())
+			}
+		}
 		for _, line := range strings.Split(info.Val(), "\n") {
 			r := regexp.MustCompile(`total_commands_processed:(\d+)`)
 			res := r.FindStringSubmatch(line)

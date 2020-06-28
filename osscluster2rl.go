@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,24 +10,36 @@ import (
 
 	osscluster2rl "github.com/Redislabs-Solution-Architects/OSSCluster2RL/helpers"
 	"github.com/go-redis/redis"
+	"github.com/pborman/getopt/v2"
 )
+
+// Name is the exported name of this application.
+const Name = "OSSCluster2RL"
+
+// Version is the current version of this application.
+const Version = "0.1.0"
 
 func main() {
 
 	var wg sync.WaitGroup
-	var configfile string
 	var clusters []osscluster2rl.Cluster
 
-	// Read config
-	flag.StringVar(&configfile, "conf", "", "path to the config file")
-	flag.Parse()
+	// Flags
+	helpFlag := getopt.BoolLong("help", 'h', "display help")
+	dbg := getopt.BoolLong("debug", 'd', "Enable debug output")
+	configfile := getopt.StringLong("conf-file", 'c', "", "The path to the toml config: eg: /tmp/myconf.toml")
+	getopt.Parse()
 
-	if configfile == "" {
-		fmt.Println("Please sepecify a config file. Run with -h for help")
+	if *helpFlag || *configfile == "" {
+		getopt.PrintUsage(os.Stderr)
 		os.Exit(1)
 	}
 
-	config := osscluster2rl.ReadConfig(configfile)
+	config := osscluster2rl.ReadConfig(*configfile)
+
+	if *dbg {
+		fmt.Println("DEBUG: Config: ", config)
+	}
 
 	rows := [][]string{
 		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "maxCommands"},
@@ -40,12 +51,15 @@ func main() {
 	}
 	writer := csv.NewWriter(csvfile)
 
-	for n, j := range config.Nodes {
+	for n, w := range config.Nodes {
 		clusters = append(clusters)
 		rdb := redis.NewClusterClient(&redis.ClusterOptions{
-			Addrs: []string{j.Host},
+			Addrs: []string{w.Host},
 		})
 		j := rdb.ClusterNodes()
+		if j.Err() != nil {
+			log.Fatal("Unable to fetch clusterinformation from", w.Host)
+		}
 		k := osscluster2rl.ParseNodes(j)
 		m := osscluster2rl.ListMasters(k)
 
@@ -53,8 +67,8 @@ func main() {
 			osscluster2rl.Cluster{
 				Name:        n,
 				Replication: osscluster2rl.GetReplicationFactor(k),
-				KeyCount:    osscluster2rl.GetKeyspace(m, ""),
-				TotalMemory: osscluster2rl.GetMemory(m, ""),
+				KeyCount:    osscluster2rl.GetKeyspace(m, "", *dbg),
+				TotalMemory: osscluster2rl.GetMemory(m, "", *dbg),
 				Nodes:       k,
 				MasterNodes: m,
 			})
@@ -65,7 +79,7 @@ func main() {
 	wg.Add(len(targets))
 	results := make(chan osscluster2rl.CmdCount, len(targets))
 	for w := 0; w < len(targets); w++ {
-		go osscluster2rl.GetCommands(targets[w].Cluster, targets[w].Server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg)
+		go osscluster2rl.GetCommands(targets[w].Cluster, targets[w].Server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg, *dbg)
 	}
 	wg.Wait()
 	close(results)
