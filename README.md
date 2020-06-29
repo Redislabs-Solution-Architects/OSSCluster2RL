@@ -16,6 +16,7 @@ cluster2,3,2,2510,19768564264,10000
 |replication_factor|the number of slaves per master in the cluster||
 |total_key_count|Total number of keys on the cluster|sum of all nodes|
 |total_memory|Amount of memory used by Redis|sum of  used_memory from all master nodes, multiply by 2 factor if using HA in Redis Enterprise|
+|maxCommands|Maximum of the Commands per Second run on the cluster over the collection period| unit = ops/second|
 
 ## Usage
 0. Download the [.tar.gz binaries](https://github.com/Redislabs-Solution-Architects/OSSCluster2RL/releases) and unzip
