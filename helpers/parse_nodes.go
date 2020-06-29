@@ -1,14 +1,21 @@
 package osscluster2rl
 
 import (
-	"github.com/go-redis/redis"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/go-redis/redis"
 )
 
-func ParseNodes(nodes *redis.StringCmd) []ClusterNode {
+// ParseNodes : get all the nodes in a cluster
+func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	var clusterNodes []ClusterNode
+	// sanity check to keep up us from chrashing, see TestParsingBroken test case
+	if len(strings.Split(nodes.Val(), "\n")) < 3 {
+		return clusterNodes, errors.New("Cluster requires at least 3 nodes")
+	}
 	// the order is not set so we need to run through this loop twice first to get the masters
 	for _, line := range strings.Split(nodes.Val(), "\n") {
 		ln := strings.Split(line, " ")
@@ -59,5 +66,5 @@ func ParseNodes(nodes *redis.StringCmd) []ClusterNode {
 		}
 	}
 
-	return clusterNodes
+	return clusterNodes, nil
 }

@@ -8,6 +8,9 @@ import (
 	osscluster2rl "github.com/Redislabs-Solution-Architects/OSSCluster2RL/helpers"
 )
 
+var brokenClusterInfo = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 :30001@40001 myself,master - 0 0 0 connected
+`
+
 var simpleClusterInfo = `de95b8cbbfc208ddf4be64de7b811c652b6d380c 127.0.0.1:30004@40004 slave 75e57a15b9e8ebf97fc5eb5390b493e08537c823 0 1593352361101 4 connected
 f59f3a29fc64553b618554abe000833c7d1ddf05 127.0.0.1:30005@40005 myself,slave 3741c6f80aff0795f0a51d991be6d68edd0478ea 0 1593352361000 5 connected
 2a9b5e4aa049ac0186d5ad3b95109909ed9eba22 127.0.0.1:30006@40006 slave c8cf86e9dc35daac9588c21dad4b4676917de1ed 0 1593352361101 6 connected
@@ -62,10 +65,19 @@ cc3ccf5ed920422607b329c8b2a6ffd191452670 11.1.8.153:6379@16379 master - 0 159321
 fcc2a37a259b86bd2d9fb25880d8cde4404e7552 11.1.8.117:6379@16379 slave 930b071c12a8a1e813545b4d99c45e6774bb65cb 0 1593218490575 946 connected
 `
 
+// TestParsingBroken : Test Node parsing
+func TestParsingBroken(t *testing.T) {
+	j := redis.NewStringResult(brokenClusterInfo, nil)
+	_, err := osscluster2rl.ParseNodes(j)
+	if err == nil {
+		t.Error("This should catch an error")
+	}
+}
+
 // TestParsingSimple : Test Node parsing
 func TestParsingSimple(t *testing.T) {
 	j := redis.NewStringResult(simpleClusterInfo, nil)
-	k := osscluster2rl.ParseNodes(j)
+	k, _ := osscluster2rl.ParseNodes(j)
 	if len(k) != 6 {
 		t.Error("Expected to find 6 servers, but got", len(k))
 	}
@@ -74,7 +86,7 @@ func TestParsingSimple(t *testing.T) {
 // TestParsingComplex : Test Node parsing
 func TestParsingComplex(t *testing.T) {
 	j := redis.NewStringResult(complexClusterInfo, nil)
-	k := osscluster2rl.ParseNodes(j)
+	k, _ := osscluster2rl.ParseNodes(j)
 	if len(k) != 44 {
 		t.Error("Expected to find 6 servers, but got", len(k))
 	}
@@ -83,7 +95,7 @@ func TestParsingComplex(t *testing.T) {
 // TestMastersSimple : Test Findind Node Masters
 func TestMastersSimple(t *testing.T) {
 	j := redis.NewStringResult(simpleClusterInfo, nil)
-	k := osscluster2rl.ParseNodes(j)
+	k, _ := osscluster2rl.ParseNodes(j)
 	m := osscluster2rl.ListMasters(k)
 	if len(m) != 3 {
 		t.Error("Expected to find 3 masters, but got", len(m))
@@ -93,28 +105,9 @@ func TestMastersSimple(t *testing.T) {
 // TestMastersComplex : Test Findind Node Masters
 func TestMastersComplex(t *testing.T) {
 	j := redis.NewStringResult(complexClusterInfo, nil)
-	k := osscluster2rl.ParseNodes(j)
+	k, _ := osscluster2rl.ParseNodes(j)
 	m := osscluster2rl.ListMasters(k)
 	if len(m) != 22 {
 		t.Error("Expected to find 22 masters, but got", len(m))
 	}
 }
-
-// TestGetCluster : Fully get running cluster statistics
-// TODO : Figure out how to mock better
-//func TestGetCluster(t *testing.T) {
-//	//j := redis.NewStringResult(simpleClusterInfo, nil)
-//	j := redis.NewStringResult(complexClusterInfo, nil)
-//	k := osscluster2rl.ParseNodes(j)
-//	m := osscluster2rl.ListMasters(k)
-//	c := osscluster2rl.Cluster{
-//		Name:        "simpleTest",
-//		Replication: osscluster2rl.GetReplicationFactor(k),
-//		KeyCount:    osscluster2rl.GetKeyspace(m, ""),
-//		TotalMemory: osscluster2rl.GetMemory(m, ""),
-//		Nodes:       k,
-//		MasterNodes: m,
-//	}
-//	t.Log(c)
-//}
-//

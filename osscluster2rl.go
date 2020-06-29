@@ -38,7 +38,7 @@ func main() {
 	config := osscluster2rl.ReadConfig(*configfile)
 
 	if *dbg {
-		fmt.Println("DEBUG: Config: ", config)
+		fmt.Printf("DEBUG: Config: %+v\n", config)
 	}
 
 	rows := [][]string{
@@ -51,7 +51,7 @@ func main() {
 	}
 	writer := csv.NewWriter(csvfile)
 
-	for n, w := range config.Nodes {
+	for n, w := range config.Clusters {
 		clusters = append(clusters)
 		rdb := redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs: []string{w.Host},
@@ -60,7 +60,10 @@ func main() {
 		if j.Err() != nil {
 			log.Fatal("Unable to fetch clusterinformation from", w.Host)
 		}
-		k := osscluster2rl.ParseNodes(j)
+		k, parserr := osscluster2rl.ParseNodes(j)
+		if parserr != nil {
+			log.Fatal("Unable to get require number of nodes from: ", w.Host, ".  Run CLUSTER INFO against this node")
+		}
 		m := osscluster2rl.ListMasters(k)
 
 		clusters = append(clusters,

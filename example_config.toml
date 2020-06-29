@@ -2,17 +2,35 @@
 
 [globals]
   # How many times to collect usage statistics
-  statsiterations=5
+  statsiterations=360
   
   # How long to wait in seconds between collecting statistics
-  statsinterval=2
+  statsinterval=10
 
   # Output file name
   outputfile="output.csv"
 
 # Host Needs only 1 member of the cluster will autodiscover the rest
-[nodes]
-  [nodes.host1]
+[clusters]
+  [clusters.staging]
     host="localhost:30001"
-  [nodes.host2]
-    host="localhost:30001"
+
+#############################################################
+# Example Mulitple clusters
+#
+#[globals]
+#  # How many times to collect usage statistics
+#  statsiterations=360
+#  
+#  # How long to wait in seconds between collecting statistics
+#  statsinterval=10
+#
+#  # Output file name
+#  outputfile="output.csv"
+#
+## Host Needs only 1 member of the cluster will autodiscover the rest
+#[clusters]
+#  [clusters.staging]
+#    host="stage-host:30001"
+#  [clusters.production]
+#    host="prod-host:30001"

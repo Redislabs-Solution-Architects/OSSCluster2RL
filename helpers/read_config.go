@@ -11,17 +11,20 @@ type redishost struct {
 	Host string
 }
 
+// Globals : global settings
 type Globals struct {
 	OutputFile      string
 	StatsIterations int
 	StatsInterval   int
 }
 
+// Config : global stuct
 type Config struct {
-	Nodes  map[string]redishost `toml:"nodes"`
-	Global Globals              `toml:"globals"`
+	Clusters map[string]redishost `toml:"clusters"`
+	Global   Globals              `toml:"globals"`
 }
 
+// ReadConfig : grab the whole configuration
 func ReadConfig(configfile string) Config {
 
 	var config Config
@@ -32,7 +35,8 @@ func ReadConfig(configfile string) Config {
 	}
 
 	if _, err := toml.DecodeFile(configfile, &config); err != nil {
-		log.Fatal(err)
+		log.Fatal("Config Error:", err)
+		os.Exit(1)
 	}
 
 	return config
