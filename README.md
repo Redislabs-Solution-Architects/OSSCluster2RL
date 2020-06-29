@@ -7,8 +7,8 @@ The data is returned in a CSV file similar to the following:
 
 ```
 name,master_count,replication_factor,total_key_count,total_memory,maxCommands
-host1,3,1,53452,8274224,120
-host2,3,2,2510,19768564264,10000
+cluster1,3,1,53452,8274224,120
+cluster2,3,2,2510,19768564264,10000
 ```
 | stat | description | notes |
 |---|---|---|
@@ -21,9 +21,19 @@ host2,3,2,2510,19768564264,10000
 0. Download the [.tar.gz binaries](https://github.com/Redislabs-Solution-Architects/OSSCluster2RL/releases) and unzip
 1. copy the example_config.toml file and edit
 2. Add nodes, you only need to specify a single node in the cluster the script will auto identify the rest
-3. Run the binary. eg for Linux: ```./osscluster2rl_linux_amd64 -conf config.toml```
+3. Run the binary. eg for Linux: ```./osscluster2rl_linux_amd64 -c config.toml```
+
+```
+Usage: osscluster2rl [-dh] [-c value] [parameters ...]
+ -c, --conf-file=value
+              The path to the toml config: eg: /tmp/myconf.toml
+ -d, --debug  Enable debug output
+ -h, --help   display help
+```
+
+If you have any issues, please run with the ``` -d ``` flag and submit the output as part of the bug report
 
 ## Building
 0. Ensure you have go >= 1.13 and make installed on your machine
-1. run ```make``
-2. Run the binary. ```./osscluster2rl -conf config.toml```
+1. run ```make```
+2. Run the binary. ```./osscluster2rl -c config.toml -d ```
