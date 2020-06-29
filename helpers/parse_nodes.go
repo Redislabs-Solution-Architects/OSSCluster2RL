@@ -9,15 +9,31 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// clean the list of returned nodes
+func cleanNodes(nodes *redis.StringCmd) ([]string, error) {
+	var cleanNodes []string
+	// sanity check to keep up us from chrashing, see TestParsingBroken test case
+	if len(strings.Split(nodes.Val(), "\n")) < 3 {
+		return cleanNodes, errors.New("Cluster requires at least 3 nodes")
+	}
+	for _, line := range strings.Split(nodes.Val(), "\n") {
+		if len(line) > 0 {
+			cleanNodes = append(cleanNodes, line)
+		}
+	}
+
+	return cleanNodes, nil
+}
+
 // ParseNodes : get all the nodes in a cluster
 func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	var clusterNodes []ClusterNode
-	// sanity check to keep up us from chrashing, see TestParsingBroken test case
-	if len(strings.Split(nodes.Val(), "\n")) < 3 {
-		return clusterNodes, errors.New("Cluster requires at least 3 nodes")
+	nodeList, err := cleanNodes(nodes)
+	if err != nil {
+		return clusterNodes, err
 	}
 	// the order is not set so we need to run through this loop twice first to get the masters
-	for _, line := range strings.Split(nodes.Val(), "\n") {
+	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
 		if len(ln) > 1 {
 			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
@@ -38,7 +54,7 @@ func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 		}
 	}
 	// TODO: DRY this up
-	for _, line := range strings.Split(nodes.Val(), "\n") {
+	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
 		if len(ln) > 1 {
 			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
