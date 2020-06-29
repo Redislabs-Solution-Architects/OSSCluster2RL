@@ -74,6 +74,10 @@ func main() {
 			})
 	}
 
+	if *dbg {
+		fmt.Println("DEBUG: Clusters: ", clusters)
+	}
+
 	targets := osscluster2rl.GetTargets(clusters)
 
 	wg.Add(len(targets))
