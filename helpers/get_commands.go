@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-// GetCommands: calculate the number of commands bein process per master
+// GetCommands : calculate the number of commands bein process per master
 func GetCommands(cluster string, server string, password string, iters int, slp int, results chan<- CmdCount, wg *sync.WaitGroup, dbg bool) {
 	defer wg.Done()
 	prevCommands := 0

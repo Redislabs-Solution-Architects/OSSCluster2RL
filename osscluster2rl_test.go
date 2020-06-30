@@ -9,6 +9,11 @@ import (
 )
 
 var brokenClusterInfo = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 :30001@40001 myself,master - 0 0 0 connected
+2a9b5e4aa049ac0186d5ad3b95109909ed9eba22 127.0.0.1:30006@40006 slave 3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 0 1593352361101 6 connected
+`
+
+var brokenClusterInfoSlave = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 127.0.0.1:30001@40001 myself,master - 0 0 0 connected
+2a9b5e4aa049ac0186d5ad3b95109909ed9eba22 127.0.0.1:AAA@40006 slave 3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 0 1593352361101 6 connected
 `
 
 var simpleClusterInfo = `de95b8cbbfc208ddf4be64de7b811c652b6d380c 127.0.0.1:30004@40004 slave 75e57a15b9e8ebf97fc5eb5390b493e08537c823 0 1593352361101 4 connected
@@ -74,19 +79,33 @@ func TestParsingBroken(t *testing.T) {
 	}
 }
 
+// TestParsingBrokenSlave : Test Node parsing
+func TestParsingBrokenSlave(t *testing.T) {
+	j := redis.NewStringResult(brokenClusterInfoSlave, nil)
+	_, err := osscluster2rl.ParseNodes(j)
+	if err == nil {
+		t.Error("This should catch an error")
+	}
+}
+
 // TestParsingSimple : Test Node parsing
 func TestParsingSimple(t *testing.T) {
 	j := redis.NewStringResult(simpleClusterInfo, nil)
-	k, _ := osscluster2rl.ParseNodes(j)
+	k, err := osscluster2rl.ParseNodes(j)
+	if err != nil {
+		t.Error("Errored: ", err)
+	}
 	if len(k) != 6 {
-		t.Error("Expected to find 6 servers, but got", len(k))
 	}
 }
 
 // TestParsingComplex : Test Node parsing
 func TestParsingComplex(t *testing.T) {
 	j := redis.NewStringResult(complexClusterInfo, nil)
-	k, _ := osscluster2rl.ParseNodes(j)
+	k, err := osscluster2rl.ParseNodes(j)
+	if err != nil {
+		t.Error("Errored: ", err)
+	}
 	if len(k) != 44 {
 		t.Error("Expected to find 6 servers, but got", len(k))
 	}
