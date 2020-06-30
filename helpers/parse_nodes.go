@@ -36,7 +36,7 @@ func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	// the order is not set so we need to run through this loop twice first to get the masters
 	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
-		if len(ln) > 1 {
+		if len(ln) > 2 {
 			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
 			res := r.FindStringSubmatch(ln[1])
 			match, _ := regexp.MatchString("master", ln[2])
@@ -61,7 +61,7 @@ func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	// TODO: DRY this up
 	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
-		if len(ln) > 1 {
+		if len(ln) > 2 {
 			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
 			res := r.FindStringSubmatch(ln[1])
 			match, _ := regexp.MatchString("slave", ln[2])
