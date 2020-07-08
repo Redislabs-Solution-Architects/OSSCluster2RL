@@ -8,6 +8,10 @@ import (
 	osscluster2rl "github.com/Redislabs-Solution-Architects/OSSCluster2RL/helpers"
 )
 
+var disconnectedSlaveInfo = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 192.168.0.1:30001@40001 myself,master - 0 0 0 connected
+2491efec2cc955d5317f2d71277d9e80b10a3a39 :0@0 slave,fail,noaddr - 1574414519922 1574414519922 474 disconnected
+`
+
 var brokenClusterInfo = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 :30001@40001 myself,master - 0 0 0 connected
 2a9b5e4aa049ac0186d5ad3b95109909ed9eba22 127.0.0.1:30006@40006 slave 3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 0 1593352361101 6 connected
 `
@@ -85,6 +89,20 @@ func TestParsingBrokenSlave(t *testing.T) {
 	_, err := osscluster2rl.ParseNodes(j)
 	if err == nil {
 		t.Error("This should catch an error")
+	}
+}
+
+// TestParsingDisconnectedSlave: Test Node parsing with a disconnected slave
+func TestParsingDisconnectedSlave(t *testing.T) {
+	j := redis.NewStringResult(disconnectedSlaveInfo, nil)
+	q, err := osscluster2rl.ParseNodes(j)
+
+	if len(q[0].Slaves) != 0 {
+		t.Error("This should return an empty slave count got:", q[0])
+	}
+
+	if err != nil {
+		t.Error("This should not catch an error:", err)
 	}
 }
 

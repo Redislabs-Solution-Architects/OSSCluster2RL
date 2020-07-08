@@ -12,13 +12,16 @@ import (
 // clean the list of returned nodes
 func cleanNodes(nodes *redis.StringCmd) ([]string, error) {
 	var cleanNodes []string
-	// sanity check to keep up us from chrashing, see TestParsingBroken test case
+	// sanity check to keep up us from crashing, see TestParsingBroken test case
 	if len(strings.Split(nodes.Val(), "\n")) < 3 {
 		return cleanNodes, errors.New("Cluster requires at least 3 nodes")
 	}
 	for _, line := range strings.Split(nodes.Val(), "\n") {
-		if len(line) > 0 {
-			cleanNodes = append(cleanNodes, line)
+		match, _ := regexp.MatchString("disconnected", line)
+		if !match {
+			if len(line) > 0 {
+				cleanNodes = append(cleanNodes, line)
+			}
 		}
 	}
 
