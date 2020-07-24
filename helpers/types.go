@@ -27,4 +27,8 @@ type Cluster struct {
 	MaxCommands int
 	Nodes       []ClusterNode
 	MasterNodes []string
+	InitialCmd  map[string]int
+	FinalCmd    map[string]int
+	InitialUsec map[string]int
+	FinalUsec   map[string]int
 }
