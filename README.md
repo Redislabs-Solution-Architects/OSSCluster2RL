@@ -15,14 +15,14 @@ production,33,1,1,9884703,765487716
 
 Command_stats
 
-cluster,command,count
+cluster,command,count,usec,avg_usec_per_call
 
-staging,set,2975648
-staging,get,22317360
+staging,set,2975648,6992772,2.35
+staging,get,22317360,42402984,1.90
 
-production,set,6284568576
-production,get,47134264320
-production,ping,211763
+production,set,6284568576,14768736153,2.35
+production,get,47134264320,89555102208,1.90
+production,ping,211763,88941,0.42
 
 ```
 | stat | description | notes |
