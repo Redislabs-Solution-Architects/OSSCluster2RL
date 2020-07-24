@@ -71,6 +71,7 @@ func main() {
 		}
 		m := osscluster2rl.ListMasters(k)
 
+		jc, ju := osscluster2rl.GetCmdStats(m, "", *dbg)
 		clusters = append(clusters,
 			osscluster2rl.Cluster{
 				Name:        n,
@@ -79,7 +80,8 @@ func main() {
 				TotalMemory: osscluster2rl.GetMemory(m, "", *dbg),
 				Nodes:       k,
 				MasterNodes: m,
-				InitialCmd:  osscluster2rl.GetCmdStats(m, "", *dbg),
+				InitialCmd:  jc,
+				InitialUsec: ju,
 			})
 
 	}
@@ -104,7 +106,7 @@ func main() {
 
 	for _, c := range clusters {
 
-		c.FinalCmd = osscluster2rl.GetCmdStats(c.MasterNodes, "", *dbg)
+		c.FinalCmd, c.FinalUsec = osscluster2rl.GetCmdStats(c.MasterNodes, "", *dbg)
 		for k, v := range c.FinalCmd {
 			w := []string{
 				c.Name,

@@ -29,4 +29,6 @@ type Cluster struct {
 	MasterNodes []string
 	InitialCmd  map[string]int
 	FinalCmd    map[string]int
+	InitialUsec map[string]int
+	FinalUsec   map[string]int
 }
