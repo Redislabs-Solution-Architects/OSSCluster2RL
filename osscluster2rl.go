@@ -108,12 +108,14 @@ func main() {
 
 		c.FinalCmd, c.FinalUsec = osscluster2rl.GetCmdStats(c.MasterNodes, "", *dbg)
 		for k, v := range c.FinalCmd {
-			w := []string{
-				c.Name,
-				k,
-				strconv.Itoa(v - c.InitialCmd[k]),
-			}
 			if (v - c.InitialCmd[k]) > 0 {
+				w := []string{
+					c.Name,
+					k,
+					strconv.Itoa(v - c.InitialCmd[k]),
+					strconv.Itoa(c.FinalUsec[k] - c.InitialUsec[k]),
+					fmt.Sprintf("%.2f", float64((c.FinalUsec[k]-c.InitialUsec[k])/(v-c.InitialCmd[k]))),
+				}
 				cmdRows = append(cmdRows, w)
 			}
 		}
@@ -132,7 +134,7 @@ func main() {
 	rows = append(rows, []string{""})
 	rows = append(rows, []string{"Command_stats"})
 	rows = append(rows, []string{""})
-	rows = append(rows, []string{"cluster", "command", "count"})
+	rows = append(rows, []string{"cluster", "command", "count", "usec", "avg_usec_per_call"})
 	rows = append(rows, []string{""})
 	for _, y := range cmdRows {
 		rows = append(rows, y)
