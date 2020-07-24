@@ -51,6 +51,9 @@ func main() {
 	}
 	writer := csv.NewWriter(csvfile)
 
+	initialCmdStat := make([]map[string]int, 0)
+	finalCmdStat := make([]map[string]int, 0)
+
 	for n, w := range config.Clusters {
 		clusters = append(clusters)
 		rdb := redis.NewClusterClient(&redis.ClusterOptions{
@@ -75,7 +78,11 @@ func main() {
 				Nodes:       k,
 				MasterNodes: m,
 			})
+		initialCmdStat = append(initialCmdStat, osscluster2rl.GetCmdStats(m, "", *dbg))
+
 	}
+
+	fmt.Println(initialCmdStat)
 
 	if *dbg {
 		fmt.Println("DEBUG: Clusters: ", clusters)

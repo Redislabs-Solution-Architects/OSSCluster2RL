@@ -62,3 +62,24 @@ func GetKeyspace(servers []string, password string, dbg bool) int {
 	}
 	return keys
 }
+
+// GetCmdStats : collect command stat information
+func GetCmdStats(servers []string, password string, dbg bool) map[string]int {
+	cmdstats := make(map[string]int)
+	for _, server := range servers {
+		client := redis.NewClient(&redis.Options{
+			Addr:     server,
+			Password: password, // no password set
+		})
+		info := client.Info("commandstats")
+		for _, line := range strings.Split(info.Val(), "\n") {
+			r := regexp.MustCompile(`cmdstat_(\w+):calls=(\d+),`)
+			res := r.FindStringSubmatch(line)
+			if len(res) == 3 {
+				j, _ := strconv.Atoi(res[2])
+				cmdstats[res[1]] += j
+			}
+		}
+	}
+	return cmdstats
+}
