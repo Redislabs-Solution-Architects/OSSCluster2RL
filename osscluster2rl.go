@@ -17,7 +17,7 @@ import (
 const Name = "OSSCluster2RL"
 
 // Version is the current version of this application.
-const Version = "0.2.1"
+const Version = "0.3.0"
 
 func main() {
 
