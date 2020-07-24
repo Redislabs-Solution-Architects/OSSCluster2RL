@@ -20,8 +20,9 @@ cluster,command,count
 staging,set,2975648
 staging,get,22317360
 
-production,get,6284568576
-production,replconf,47134264320
+production,set,6284568576
+production,get,47134264320
+production,ping,211763
 
 ```
 | stat | description | notes |
