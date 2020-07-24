@@ -42,17 +42,19 @@ func main() {
 	}
 
 	rows := [][]string{
+		{"Cluster_Capacity"},
+		{""},
 		{"name", "master_count", "replication_factor", "total_key_count", "total_memory", "maxCommands"},
+		{""},
 	}
+	// cmd rows hold the output from the cmdStat command
+	cmdRows := [][]string{}
 	csvfile, err := os.Create(config.Global.OutputFile)
 
 	if err != nil {
 		log.Fatalf("failed creating file: %s", err)
 	}
 	writer := csv.NewWriter(csvfile)
-
-	initialCmdStat := make([]map[string]int, 0)
-	finalCmdStat := make([]map[string]int, 0)
 
 	for n, w := range config.Clusters {
 		clusters = append(clusters)
@@ -77,15 +79,13 @@ func main() {
 				TotalMemory: osscluster2rl.GetMemory(m, "", *dbg),
 				Nodes:       k,
 				MasterNodes: m,
+				InitialCmd:  osscluster2rl.GetCmdStats(m, "", *dbg),
 			})
-		initialCmdStat = append(initialCmdStat, osscluster2rl.GetCmdStats(m, "", *dbg))
 
 	}
 
-	fmt.Println(initialCmdStat)
-
 	if *dbg {
-		fmt.Println("DEBUG: Clusters: ", clusters)
+		fmt.Printf("DEBUG: Clusters: %+v\n", clusters)
 	}
 
 	targets := osscluster2rl.GetTargets(clusters)
@@ -104,6 +104,19 @@ func main() {
 
 	for _, c := range clusters {
 
+		c.FinalCmd = osscluster2rl.GetCmdStats(c.MasterNodes, "", *dbg)
+		for k, v := range c.FinalCmd {
+			w := []string{
+				c.Name,
+				k,
+				strconv.Itoa(v - c.InitialCmd[k]),
+			}
+			if (v - c.InitialCmd[k]) > 0 {
+				cmdRows = append(cmdRows, w)
+			}
+		}
+		cmdRows = append(cmdRows, []string{""})
+
 		r := []string{
 			c.Name,
 			strconv.Itoa(len(c.MasterNodes)),
@@ -113,6 +126,16 @@ func main() {
 			strconv.Itoa(cmds[c.Name])}
 		rows = append(rows, r)
 	}
+
+	rows = append(rows, []string{""})
+	rows = append(rows, []string{"Command_stats"})
+	rows = append(rows, []string{""})
+	rows = append(rows, []string{"cluster", "command", "count"})
+	rows = append(rows, []string{""})
+	for _, y := range cmdRows {
+		rows = append(rows, y)
+	}
+
 	for _, record := range rows {
 		if err := writer.Write(record); err != nil {
 			log.Fatalln("error writing record to csv:", err)

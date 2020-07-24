@@ -6,17 +6,33 @@ This program collects usage data from open source redis clusters and obtains the
 The data is returned in a CSV file similar to the following:
 
 ```
+Cluster_Capacity
+
 name,master_count,replication_factor,total_key_count,total_memory,maxCommands
-cluster1,3,1,53452,8274224,120
-cluster2,3,2,2510,19768564264,10000
+
+staging,3,1,1,8235656,412087
+production,33,1,1,9884703,765487716
+
+Command_stats
+
+cluster,command,count
+
+staging,set,2975648
+staging,get,22317360
+
+production,get,6284568576
+production,replconf,47134264320
+
 ```
 | stat | description | notes |
 |---|---|---|
 |master_count|number of master nodes in the cluster||
 |replication_factor|the number of slaves per master in the cluster||
-|total_key_count|Total number of keys on the cluster|sum of all nodes|
+|total_key_count|Total number of keys on the cluster|sum of key count from all master nodes|
 |total_memory|Amount of memory used by Redis|sum of  used_memory from all master nodes, multiply by 2 factor if using HA in Redis Enterprise|
 |maxCommands|Maximum of the Commands per Second run on the cluster over the collection period| unit = ops/second|
+
+Command_stats are the count for each Redis command from the start of the stats gathering to the end of the run, useful for determining the operational complexity being seen across the cluster.
 
 ## Usage
 0. Download the [.tar.gz binaries](https://github.com/Redislabs-Solution-Architects/OSSCluster2RL/releases) and unzip
