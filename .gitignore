@@ -1,3 +1,4 @@
 bin/osscluster2rl_*
+output*.csv
 output.csv
 osscluster2rl
