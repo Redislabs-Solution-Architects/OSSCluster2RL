@@ -10,6 +10,7 @@ import (
 type redishost struct {
 	Host     string
 	Password string
+	SSL      bool
 }
 
 // Globals : global settings

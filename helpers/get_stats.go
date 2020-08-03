@@ -1,6 +1,7 @@
 package osscluster2rl
 
 import (
+	"crypto/tls"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -10,12 +11,13 @@ import (
 )
 
 // GetMemory : collect memory usage information
-func GetMemory(servers []string, password string, dbg bool) int {
+func GetMemory(servers []string, password string, sslConf *tls.Config, dbg bool) int {
 	bytes := 0
 	for _, server := range servers {
 		client := redis.NewClient(&redis.Options{
-			Addr:     server,
-			Password: password, // no password set
+			Addr:      server,
+			Password:  password,
+			TLSConfig: sslConf,
 		})
 		info := client.Info("memory")
 		if dbg {
@@ -37,12 +39,13 @@ func GetMemory(servers []string, password string, dbg bool) int {
 }
 
 // GetKeyspace : collect memory keyspace information
-func GetKeyspace(servers []string, password string, dbg bool) int {
+func GetKeyspace(servers []string, password string, sslConf *tls.Config, dbg bool) int {
 	keys := 0
 	for _, server := range servers {
 		client := redis.NewClient(&redis.Options{
-			Addr:     server,
-			Password: password, // no password set
+			Addr:      server,
+			Password:  password,
+			TLSConfig: sslConf,
 		})
 		info := client.Info("keyspace")
 		if dbg {
@@ -64,13 +67,14 @@ func GetKeyspace(servers []string, password string, dbg bool) int {
 }
 
 // GetCmdStats : collect command stat information
-func GetCmdStats(servers []string, password string, dbg bool) (map[string]int, map[string]int) {
+func GetCmdStats(servers []string, password string, sslConf *tls.Config, dbg bool) (map[string]int, map[string]int) {
 	cmdstats := make(map[string]int)
 	cmdusec := make(map[string]int)
 	for _, server := range servers {
 		client := redis.NewClient(&redis.Options{
-			Addr:     server,
-			Password: password, // no password set
+			Addr:      server,
+			Password:  password,
+			TLSConfig: sslConf,
 		})
 		info := client.Info("commandstats")
 		for _, line := range strings.Split(info.Val(), "\n") {

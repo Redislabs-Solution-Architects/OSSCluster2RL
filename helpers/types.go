@@ -1,5 +1,7 @@
 package osscluster2rl
 
+import "crypto/tls"
+
 type ClusterNode struct {
 	ID      string
 	IP      string
@@ -18,6 +20,7 @@ type CmdTarget struct {
 	Cluster  string
 	Server   string
 	Password string
+	SSL      *tls.Config
 }
 
 type Cluster struct {
@@ -33,4 +36,5 @@ type Cluster struct {
 	FinalCmd    map[string]int
 	InitialUsec map[string]int
 	FinalUsec   map[string]int
+	SSL         *tls.Config
 }

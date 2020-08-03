@@ -1,6 +1,7 @@
 package osscluster2rl
 
 import (
+	"crypto/tls"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -12,13 +13,14 @@ import (
 )
 
 // GetCommands : calculate the number of commands bein process per master
-func GetCommands(cluster string, server string, password string, iters int, slp int, results chan<- CmdCount, wg *sync.WaitGroup, dbg bool) {
+func GetCommands(cluster string, server string, password string, sslConf *tls.Config, iters int, slp int, results chan<- CmdCount, wg *sync.WaitGroup, dbg bool) {
 	defer wg.Done()
 	prevCommands := 0
 	maxCommands := 0
 	client := redis.NewClient(&redis.Options{
-		Addr:     server,
-		Password: password, // no password set
+		Addr:      server,
+		Password:  password,
+		TLSConfig: sslConf,
 	})
 	for i := 1; i <= iters; i++ {
 		info := client.Info("stats")
