@@ -14,6 +14,8 @@
 [clusters]
   [clusters.staging]
     host="localhost:30001"
+    #password="mypassword"
+    #ssl=true
 
 #############################################################
 # Example Mulitple clusters
@@ -32,5 +34,9 @@
 #[clusters]
 #  [clusters.staging]
 #    host="stage-host:30001"
+#    ssl=false
+#    password="1234"
 #  [clusters.production]
 #    host="prod-host:30001"
+#    password="s00perSecr3t"
+#    ssl=true
