@@ -8,7 +8,8 @@ import (
 )
 
 type redishost struct {
-	Host string
+	Host     string
+	Password string
 }
 
 // Globals : global settings

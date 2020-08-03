@@ -15,8 +15,9 @@ type CmdCount struct {
 }
 
 type CmdTarget struct {
-	Cluster string
-	Server  string
+	Cluster  string
+	Server   string
+	Password string
 }
 
 type Cluster struct {
@@ -26,6 +27,7 @@ type Cluster struct {
 	TotalMemory int
 	MaxCommands int
 	Nodes       []ClusterNode
+	Password    string
 	MasterNodes []string
 	InitialCmd  map[string]int
 	FinalCmd    map[string]int

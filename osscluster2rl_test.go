@@ -8,6 +8,13 @@ import (
 	osscluster2rl "github.com/Redislabs-Solution-Architects/OSSCluster2RL/helpers"
 )
 
+var azureClusterInfo = `d1eacb222624c77b00117a9b5f44c14b92ebf274 23.101.193.229:13003 slave 6d6bdca99ac3c2de5b25ad0cd468965eaf0c0cef 0 1596469840000 1 connected
+5d1ebaa61f5fd3849a05834e2f6e9ffa2bc38d19 23.101.193.229:13004 master - 0 1596469841000 3 connected 5462-8191 13653-16383
+22e92ba178225f9e65201570869eb96e74844667 23.101.193.229:13005 slave 5d1ebaa61f5fd3849a05834e2f6e9ffa2bc38d19 0 1596469840428 4 connected
+e6f6603c88b51a9de1878635a81e25e3d3a81eed 23.101.193.229:13001 slave aabbc2b9e51d15394c418c09144bddfde2bc1370 0 1596469840209 2 connected
+6d6bdca99ac3c2de5b25ad0cd468965eaf0c0cef 23.101.193.229:13002 myself,master - 0 1596469841000 1 connected 8192-13652
+aabbc2b9e51d15394c418c09144bddfde2bc1370 23.101.193.229:13000 master - 0 1596469841626 2 connected 0-5461`
+
 var disconnectedSlaveInfo = `3f63ff407ec6af6b39b64f8363f2ca1b5fa8e774 192.168.0.1:30001@40001 myself,master - 0 0 0 connected
 2491efec2cc955d5317f2d71277d9e80b10a3a39 :0@0 slave,fail,noaddr - 1574414519922 1574414519922 474 disconnected
 `
@@ -73,6 +80,19 @@ cc3ccf5ed920422607b329c8b2a6ffd191452670 11.1.8.153:6379@16379 master - 0 159321
 8e179b93a87c5017142d571d29826c3ff84cec31 11.1.8.165:6379@16379 master - 0 1593218489766 950 connected 3352-4095
 fcc2a37a259b86bd2d9fb25880d8cde4404e7552 11.1.8.117:6379@16379 slave 930b071c12a8a1e813545b4d99c45e6774bb65cb 0 1593218490575 946 connected
 `
+
+// TestAzureParsing: Test Node parsing for Azure
+func TestAzureParsing(t *testing.T) {
+	j := redis.NewStringResult(azureClusterInfo, nil)
+	f, err := osscluster2rl.ParseNodes(j)
+	if err != nil {
+		t.Error("This should not catch an error: ", err)
+	}
+
+	if len(f) < 2 {
+		t.Error("This should return more than 2 nodes returned :", f)
+	}
+}
 
 // TestParsingBroken : Test Node parsing
 func TestParsingBroken(t *testing.T) {

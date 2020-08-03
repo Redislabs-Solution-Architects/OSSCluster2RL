@@ -59,29 +59,31 @@ func main() {
 	for n, w := range config.Clusters {
 		clusters = append(clusters)
 		rdb := redis.NewClusterClient(&redis.ClusterOptions{
-			Addrs: []string{w.Host},
+			Addrs:    []string{w.Host},
+			Password: w.Password,
 		})
 		j := rdb.ClusterNodes()
 		if j.Err() != nil {
-			log.Fatal("Unable to fetch clusterinformation from", w.Host)
+			log.Fatal("Unable to fetch cluster information from: ", w.Host, " ", j.Err())
 		}
 		k, parserr := osscluster2rl.ParseNodes(j)
 		if parserr != nil {
-			log.Fatal("Unable to get require number of nodes from: ", w.Host, ".  Run CLUSTER INFO against this node")
+			log.Fatal("Unable to get required number of nodes from: ", w.Host, ".  Run CLUSTER INFO against this node")
 		}
 		m := osscluster2rl.ListMasters(k)
 
-		jc, ju := osscluster2rl.GetCmdStats(m, "", *dbg)
+		jc, ju := osscluster2rl.GetCmdStats(m, w.Password, *dbg)
 		clusters = append(clusters,
 			osscluster2rl.Cluster{
 				Name:        n,
 				Replication: osscluster2rl.GetReplicationFactor(k),
-				KeyCount:    osscluster2rl.GetKeyspace(m, "", *dbg),
-				TotalMemory: osscluster2rl.GetMemory(m, "", *dbg),
+				KeyCount:    osscluster2rl.GetKeyspace(m, w.Password, *dbg),
+				TotalMemory: osscluster2rl.GetMemory(m, w.Password, *dbg),
 				Nodes:       k,
 				MasterNodes: m,
 				InitialCmd:  jc,
 				InitialUsec: ju,
+				Password:    w.Password,
 			})
 
 	}
@@ -95,7 +97,7 @@ func main() {
 	wg.Add(len(targets))
 	results := make(chan osscluster2rl.CmdCount, len(targets))
 	for w := 0; w < len(targets); w++ {
-		go osscluster2rl.GetCommands(targets[w].Cluster, targets[w].Server, "", config.Global.StatsIterations, config.Global.StatsInterval, results, &wg, *dbg)
+		go osscluster2rl.GetCommands(targets[w].Cluster, targets[w].Server, targets[w].Password, config.Global.StatsIterations, config.Global.StatsInterval, results, &wg, *dbg)
 	}
 	wg.Wait()
 	close(results)
@@ -106,7 +108,7 @@ func main() {
 
 	for _, c := range clusters {
 
-		c.FinalCmd, c.FinalUsec = osscluster2rl.GetCmdStats(c.MasterNodes, "", *dbg)
+		c.FinalCmd, c.FinalUsec = osscluster2rl.GetCmdStats(c.MasterNodes, c.Password, *dbg)
 		for k, v := range c.FinalCmd {
 			if (v - c.InitialCmd[k]) > 0 {
 				w := []string{

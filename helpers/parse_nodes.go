@@ -40,19 +40,19 @@ func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
 		if len(ln) > 2 {
-			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
+			r := regexp.MustCompile(`(\S+):(\d+)`)
 			res := r.FindStringSubmatch(ln[1])
 			match, _ := regexp.MatchString("master", ln[2])
 			if match {
-				if len(res) > 3 {
+				//fmt.Println("MATCH: ", ln[1])
+				//fmt.Println("RES: ", res)
+				if len(res) > 2 {
 					i, _ := strconv.Atoi(res[2])
-					j, _ := strconv.Atoi(res[3])
 					n := ClusterNode{
-						ID:      ln[0],
-						Role:    "master",
-						IP:      res[1],
-						Port:    i,
-						Cmdport: j,
+						ID:   ln[0],
+						Role: "master",
+						IP:   res[1],
+						Port: i,
 					}
 					clusterNodes = append(clusterNodes, n)
 				} else {
@@ -65,20 +65,18 @@ func ParseNodes(nodes *redis.StringCmd) ([]ClusterNode, error) {
 	for _, line := range nodeList {
 		ln := strings.Split(line, " ")
 		if len(ln) > 2 {
-			r := regexp.MustCompile(`(\S+):(\d+)@(\d+)`)
+			r := regexp.MustCompile(`(\S+):(\d+)`)
 			res := r.FindStringSubmatch(ln[1])
 			match, _ := regexp.MatchString("slave", ln[2])
 
 			if match {
-				if len(res) > 3 {
+				if len(res) > 2 {
 					i, _ := strconv.Atoi(res[2])
-					j, _ := strconv.Atoi(res[3])
 					n := ClusterNode{
-						ID:      ln[0],
-						Role:    "slave",
-						IP:      res[1],
-						Port:    i,
-						Cmdport: j,
+						ID:   ln[0],
+						Role: "slave",
+						IP:   res[1],
+						Port: i,
 					}
 					clusterNodes = append(clusterNodes, n)
 					for i, v := range clusterNodes {

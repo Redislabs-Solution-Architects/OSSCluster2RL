@@ -19,7 +19,7 @@ func GetTargets(c []Cluster) []CmdTarget {
 	var targets []CmdTarget
 	for _, w := range c {
 		for _, t := range w.MasterNodes {
-			targets = append(targets, CmdTarget{Cluster: w.Name, Server: t})
+			targets = append(targets, CmdTarget{Cluster: w.Name, Server: t, Password: w.Password})
 		}
 	}
 	return targets
